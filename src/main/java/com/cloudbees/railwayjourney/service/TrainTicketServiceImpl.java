@@ -39,7 +39,7 @@ public class TrainTicketServiceImpl implements TrainTicketService {
 	seatsBySection.put(TrainSection.SECTION_A, new ArrayList<Seat>());
 	seatsBySection.put(TrainSection.SECTION_B, new ArrayList<Seat>());
 	for (Map.Entry<TrainSection, List<Seat>> entry : seatsBySection.entrySet()) {
-	    // 10 seats exists in a section
+	    // 10 seats exists in a section - consideration
 	    for (int i = 1; i <= 10; i++) {
 		Seat seat = new Seat(i, entry.getKey());
 		List<Seat> seatList = seatsBySection.get(entry.getKey());
@@ -54,7 +54,7 @@ public class TrainTicketServiceImpl implements TrainTicketService {
     public Ticket purchaseTicket(PurchaseTicketRequest purchaseTicketRequest) {
 	User user = new User(userIdGenerator.getAndIncrement(), purchaseTicketRequest.getFirstName(),
 		purchaseTicketRequest.getLastName(), purchaseTicketRequest.getEmail());
-
+	logger.info("purchase ticket request received");
 	Ticket ticket = getTicketForUser(purchaseTicketRequest, user);
 
 	Seat seat = getAvailableSeat();
@@ -63,6 +63,7 @@ public class TrainTicketServiceImpl implements TrainTicketService {
 	} else {
 	    updateSeatDetails(user, ticket, seat);
 	    updateStructures(user, ticket, seat);
+	    logger.info("purchase ticket request responded");
 	    return ticket;
 	}
 
@@ -88,16 +89,19 @@ public class TrainTicketServiceImpl implements TrainTicketService {
     }
 
     private Ticket getTicketForUser(PurchaseTicketRequest purchaseTicketRequest, User user) {
+	logger.info("get ticket for user request received");
 	Ticket ticket = new Ticket();
 	ticket.setId(ticketIdGenerator.getAndIncrement());
 	ticket.setFromLocation(purchaseTicketRequest.getFromLocation());
 	ticket.setToDestination(purchaseTicketRequest.getToDestination());
 	// hard coded as of now
 	ticket.setPrice(20);
+	logger.info("get ticket for user request responded");
 	return ticket;
     }
 
     protected Seat getAvailableSeat() {
+	logger.info("checking seat availabilty");
 	// check for available seats which were canceled after booking
 	if (!reusableSeatList.isEmpty()) {
 	    Seat seat = reusableSeatList.get(0);
@@ -118,21 +122,20 @@ public class TrainTicketServiceImpl implements TrainTicketService {
 
     @Override
     public Ticket getTicketReceipt(long userId) {
+	logger.info("get ticket receipt for user request received");
 	for (Map.Entry<Long, Ticket> entry : tickets.entrySet()) {
 	    if (entry.getValue().getSeat().getUser().getId().equals(userId)) {
+		logger.info("get ticket receipt for user responded");
 		return entry.getValue();
 	    }
 	}
-//	for (Ticket ticket : tickets.values()) {
-//	    if (ticket.getUser().getId().equals(userId)) {
-//		return ticket;
-//	    }
-//	}
+	logger.info("get ticket receipt not found");
 	return null;
     }
 
     @Override
     public List<Seat> getUserByTicketSection(TrainSection section) {
+	logger.info("get users by train section request received");
 	List<Seat> seatsInSection = new ArrayList<>();
 
 	if (seatsBySection.containsKey(section)) {
@@ -143,12 +146,13 @@ public class TrainTicketServiceImpl implements TrainTicketService {
 		}
 	    }
 	}
-
+	logger.info("get users by train section request responded");
 	return seatsInSection;
     }
 
     @Override
     public boolean removeUser(long userId) {
+	logger.info("remove user request received");
 	if (users.containsKey(userId)) {
 	    // remove from users map
 	    users.remove(userId);
@@ -173,15 +177,16 @@ public class TrainTicketServiceImpl implements TrainTicketService {
 		    }
 		}
 	    }
+	    logger.info("remove user request responded");
 	    return true;
 	}
-
+	logger.info("remove user couldn't happen");
 	return false;
     }
 
     @Override
     public boolean modifyUserSeat(long userId) {
-
+	logger.info("remove user seat request received");
 	User user = users.get(userId);
 	if (user == null) {
 	    return false;
@@ -217,10 +222,7 @@ public class TrainTicketServiceImpl implements TrainTicketService {
 			newSeat = reusableSeatList.get(i);
 			newSeat.setBooked(true);
 			newSeat.setUser(user);
-			// update seatsBySection map with modified user seat
-			List<Seat> seatList = seatsBySection.get(newSeat.getSection());
-			seatList.add(newSeat);
-			seatsBySection.put(newSeat.getSection(), seatList);
+
 			// remove seat from reusable seat list as using the seat from same
 			reusableSeatList.remove(i);
 			break;
@@ -238,10 +240,6 @@ public class TrainTicketServiceImpl implements TrainTicketService {
 			newSeat = seat;
 			newSeat.setBooked(true);
 			newSeat.setUser(user);
-			// update modified seat in seatsBySection map
-			List<Seat> seatList = seatsBySection.get(newSeat.getSection());
-			seatList.add(newSeat);
-			seatsBySection.put(newSeat.getSection(), seatList);
 
 			break;
 		    }
@@ -272,6 +270,7 @@ public class TrainTicketServiceImpl implements TrainTicketService {
 		seatsBySection.put(existingSeat.getSection(), seatList);
 
 	    }
+	    logger.info("remove user seat couldn't happen");
 	    return false;
 	} else {
 	    // update tickets map with updated seat
@@ -284,6 +283,7 @@ public class TrainTicketServiceImpl implements TrainTicketService {
 		    break;
 		}
 	    }
+	    logger.info("remove user seat request responded");
 	    return true;
 	}
     }
