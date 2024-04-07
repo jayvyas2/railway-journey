@@ -69,7 +69,7 @@ public class TrainTicketController {
     public ResponseEntity<Object> modifyUserSeat(@PathVariable Long userId) {
 	boolean removed = trainTicketService.modifyUserSeat(userId);
 	if (removed) {
-	    return ResponseEntity.ok("User seat modified");
+	    return ResponseEntity.ok("{\"response\":\"User seat modified\"}");
 	} else {
 	    return new ResponseEntity<Object>(
 		    "{\"response\":\"User seat not modified due to either no other seat availability or invalid user\"}",
